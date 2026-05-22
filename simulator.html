@@ -1,0 +1,1046 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CS Simulator — Ana Fernanda Coindreau Garcia</title>
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --navy:    #0b1d3a;
+      --navy-m:  #132848;
+      --navy-l:  #1c3a60;
+      --gold:    #c9a84c;
+      --gold-l:  #f5edd8;
+      --white:   #ffffff;
+      --off:     #f7f9fc;
+      --border:  #e4eaf2;
+      --text:    #1e2d45;
+      --muted:   #607590;
+      --red:     #dc2626;
+      --green:   #16a34a;
+      --amber:   #d97706;
+      --radius:  12px;
+      --sh:      0 4px 20px rgba(11,29,58,.09);
+      --sh-lg:   0 10px 40px rgba(11,29,58,.15);
+    }
+
+    html, body { height: 100%; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: var(--off);
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    a { text-decoration: none; color: inherit; }
+
+    /* ══════════════════════════════════════════════════
+       NAV — matches portfolio exactly
+    ══════════════════════════════════════════════════ */
+    nav {
+      position: sticky; top: 0; z-index: 200;
+      height: 64px;
+      background: rgba(11,29,58,.97);
+      backdrop-filter: blur(14px);
+      border-bottom: 1px solid rgba(255,255,255,.06);
+      display: flex; align-items: center;
+      box-shadow: 0 2px 24px rgba(0,0,0,.25);
+    }
+    .nav-inner {
+      display: flex; align-items: center; justify-content: space-between;
+      width: 100%; max-width: 1200px; margin: 0 auto; padding: 0 28px;
+    }
+    .nav-logo {
+      font-size: 1rem; font-weight: 900; color: var(--white); letter-spacing: .5px;
+    }
+    .nav-logo em { color: var(--gold); font-style: normal; }
+    .nav-links { display: flex; gap: 28px; align-items: center; }
+    .nav-links a {
+      font-size: .82rem; font-weight: 600; letter-spacing: .3px;
+      color: rgba(255,255,255,.6); transition: color .2s;
+    }
+    .nav-links a:hover { color: var(--white); }
+    .nav-links a.active {
+      color: var(--gold);
+    }
+    .nav-back {
+      display: flex; align-items: center; gap: 6px;
+      font-size: .82rem; font-weight: 600;
+      color: rgba(255,255,255,.5);
+      transition: color .2s;
+    }
+    .nav-back:hover { color: var(--white); }
+    .nav-cta {
+      background: var(--gold); color: var(--navy) !important;
+      padding: 8px 20px; border-radius: 8px; font-weight: 800 !important;
+      transition: opacity .2s;
+    }
+    .nav-cta:hover { opacity: .88; }
+
+    /* ══════════════════════════════════════════════════
+       PAGE HERO — mini hero matching portfolio style
+    ══════════════════════════════════════════════════ */
+    .page-hero {
+      background: var(--navy);
+      padding: 52px 28px 48px;
+      position: relative; overflow: hidden;
+    }
+    .page-hero::before {
+      content: '';
+      position: absolute; inset: 0;
+      background:
+        radial-gradient(ellipse 50% 80% at 90% 50%, rgba(201,168,76,.10) 0%, transparent 65%),
+        radial-gradient(ellipse 35% 60% at 10% 60%, rgba(28,58,96,.5) 0%, transparent 60%);
+      pointer-events: none;
+    }
+    .page-hero::after {
+      content: '';
+      position: absolute; inset: 0;
+      background-image:
+        linear-gradient(rgba(255,255,255,.02) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.02) 1px, transparent 1px);
+      background-size: 60px 60px;
+      pointer-events: none;
+    }
+    .page-hero-inner {
+      max-width: 1200px; margin: 0 auto;
+      position: relative; z-index: 1;
+      display: flex; align-items: flex-end; justify-content: space-between;
+      gap: 32px; flex-wrap: wrap;
+    }
+    .ph-eyebrow {
+      display: flex; align-items: center; gap: 10px; margin-bottom: 14px;
+    }
+    .ph-eyebrow::before { content: ''; display: block; width: 28px; height: 2px; background: var(--gold); }
+    .ph-eyebrow span {
+      font-size: .72rem; font-weight: 700; letter-spacing: 3px;
+      text-transform: uppercase; color: var(--gold);
+    }
+    .page-hero h1 {
+      font-size: clamp(1.6rem, 3vw, 2.2rem);
+      font-weight: 900; color: var(--white); line-height: 1.2;
+      margin-bottom: 10px;
+    }
+    .page-hero p {
+      font-size: .95rem; color: rgba(255,255,255,.5); max-width: 480px; line-height: 1.75;
+    }
+
+    /* API key bar — white strip below nav */
+    .api-bar {
+      background: var(--white);
+      border-bottom: 2px solid var(--gold);
+      padding: 14px 28px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+    .api-bar-label {
+      font-size: .72rem; font-weight: 800; letter-spacing: 2px;
+      text-transform: uppercase; color: var(--navy);
+      white-space: nowrap;
+    }
+    .api-bar input {
+      flex: 1; min-width: 280px; max-width: 520px;
+      background: var(--off);
+      border: 1.5px solid var(--border);
+      border-radius: 8px; padding: 10px 14px;
+      color: var(--text); font-size: .85rem;
+      font-family: monospace; outline: none;
+      transition: border-color .2s, box-shadow .2s;
+    }
+    .api-bar input:focus {
+      border-color: var(--gold);
+      box-shadow: 0 0 0 3px rgba(201,168,76,.15);
+    }
+    .api-bar-hint {
+      font-size: .72rem; color: var(--muted);
+      display: flex; align-items: center; gap: 5px;
+    }
+    .api-bar-status {
+      display: flex; align-items: center; gap: 6px;
+      font-size: .72rem; font-weight: 700;
+      color: var(--green);
+    }
+    .api-bar-status::before {
+      content: ''; width: 7px; height: 7px; border-radius: 50%;
+      background: var(--green); flex-shrink: 0;
+    }
+
+    /* ══════════════════════════════════════════════════
+       MAIN LAYOUT
+    ══════════════════════════════════════════════════ */
+    main {
+      flex: 1;
+      max-width: 1200px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 28px 28px 48px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    /* ══════════════════════════════════════════════════
+       SCENARIO SELECTOR
+    ══════════════════════════════════════════════════ */
+    .scenario-row {
+      display: flex; gap: 10px; flex-wrap: wrap; align-items: center;
+    }
+    .scenario-row-label {
+      font-size: .7rem; font-weight: 800; letter-spacing: 2px;
+      text-transform: uppercase; color: var(--muted);
+      white-space: nowrap; margin-right: 4px;
+    }
+    .sc-btn {
+      display: flex; align-items: center; gap: 8px;
+      background: var(--white);
+      border: 1.5px solid var(--border);
+      border-radius: 10px; padding: 10px 18px;
+      font-size: .83rem; font-weight: 600; color: var(--muted);
+      cursor: pointer; transition: all .2s;
+    }
+    .sc-btn:hover { border-color: var(--gold); color: var(--text); box-shadow: var(--sh); }
+    .sc-btn.active {
+      background: var(--navy); border-color: var(--navy);
+      color: var(--white); box-shadow: var(--sh);
+    }
+    .sc-btn .sc-icon { font-size: 1rem; }
+    .btn-reset {
+      margin-left: auto;
+      background: none; border: 1.5px solid var(--border);
+      border-radius: 10px; padding: 9px 18px;
+      font-size: .8rem; font-weight: 700; color: var(--muted);
+      cursor: pointer; transition: all .2s;
+    }
+    .btn-reset:hover { border-color: var(--red); color: var(--red); }
+
+    /* ══════════════════════════════════════════════════
+       STATS ROW
+    ══════════════════════════════════════════════════ */
+    .stats-row {
+      display: flex; gap: 12px;
+    }
+    .stat-pill {
+      background: var(--white); border: 1px solid var(--border);
+      border-radius: 10px; padding: 12px 20px;
+      box-shadow: var(--sh); text-align: center; flex: 1;
+      display: flex; align-items: center; gap: 12px;
+    }
+    .stat-pill .sp-icon {
+      width: 36px; height: 36px; border-radius: 9px;
+      background: var(--gold-l);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1rem; flex-shrink: 0;
+    }
+    .stat-pill .sp-num {
+      font-size: 1.3rem; font-weight: 900; color: var(--navy); line-height: 1;
+    }
+    .stat-pill .sp-lbl {
+      font-size: .68rem; font-weight: 700; letter-spacing: 1px;
+      text-transform: uppercase; color: var(--muted); margin-top: 2px;
+    }
+
+    /* ══════════════════════════════════════════════════
+       SIM GRID
+    ══════════════════════════════════════════════════ */
+    .sim-grid {
+      display: grid;
+      grid-template-columns: 1fr 340px;
+      gap: 20px;
+    }
+
+    /* ══════════════════════════════════════════════════
+       CHAT PANEL
+    ══════════════════════════════════════════════════ */
+    .chat-panel {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--sh);
+      display: flex; flex-direction: column;
+      overflow: hidden;
+    }
+
+    .chat-header {
+      background: var(--navy-m);
+      padding: 14px 20px;
+      display: flex; align-items: center; gap: 12px;
+      border-bottom: 1px solid rgba(255,255,255,.07);
+    }
+    .ch-avatar {
+      width: 38px; height: 38px; border-radius: 50%;
+      background: linear-gradient(135deg, #7f1d1d, #dc2626);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1rem; flex-shrink: 0;
+    }
+    .ch-info strong {
+      display: block; font-size: .88rem; font-weight: 800; color: var(--white);
+    }
+    .ch-info span { font-size: .7rem; color: rgba(255,255,255,.4); }
+    .mood-badge {
+      margin-left: auto; font-size: .7rem; font-weight: 700;
+      padding: 4px 12px; border-radius: 20px;
+      background: rgba(220,38,38,.2); color: #fca5a5;
+      border: 1px solid rgba(220,38,38,.3);
+      transition: all .5s;
+    }
+    .mood-badge.calming {
+      background: rgba(22,163,74,.15); color: #86efac;
+      border-color: rgba(22,163,74,.3);
+    }
+
+    .chat-messages {
+      flex: 1; overflow-y: auto;
+      padding: 22px; display: flex; flex-direction: column; gap: 16px;
+      min-height: 380px; max-height: 440px;
+    }
+
+    .empty-state {
+      display: flex; flex-direction: column; align-items: center;
+      justify-content: center; height: 100%; gap: 14px;
+    }
+    .empty-state .es-icon { font-size: 3rem; opacity: .3; }
+    .empty-state h3 { font-size: .95rem; font-weight: 800; color: var(--navy); }
+    .empty-state p { font-size: .83rem; color: var(--muted); text-align: center; max-width: 280px; line-height: 1.65; }
+
+    /* Messages */
+    .msg { display: flex; gap: 10px; animation: msgIn .28s ease-out; }
+    @keyframes msgIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:none} }
+    .msg.user { flex-direction: row-reverse; }
+    .msg-av {
+      width: 32px; height: 32px; border-radius: 50%;
+      flex-shrink: 0; display: flex; align-items: center;
+      justify-content: center; font-size: .88rem; margin-top: 18px;
+    }
+    .msg.client .msg-av { background: linear-gradient(135deg,#7f1d1d,#dc2626); }
+    .msg.user   .msg-av { background: var(--navy-l); }
+    .msg-body { max-width: 80%; }
+    .msg-name {
+      font-size: .65rem; font-weight: 800; letter-spacing: .5px;
+      text-transform: uppercase; margin-bottom: 4px;
+    }
+    .msg.client .msg-name { color: #dc2626; }
+    .msg.user   .msg-name { color: var(--gold); text-align: right; }
+    .msg-bubble {
+      padding: 11px 15px; border-radius: 14px;
+      font-size: .88rem; line-height: 1.65;
+    }
+    .msg.client .msg-bubble {
+      background: #fef2f2; border: 1px solid #fecaca;
+      color: var(--text); border-top-left-radius: 4px;
+    }
+    .msg.user .msg-bubble {
+      background: var(--navy); color: rgba(255,255,255,.92);
+      border-top-right-radius: 4px;
+    }
+
+    /* Typing */
+    .typing { display: flex; gap: 10px; align-items: flex-start; }
+    .typing-av {
+      width: 32px; height: 32px; border-radius: 50%;
+      background: linear-gradient(135deg,#7f1d1d,#dc2626);
+      display: flex; align-items: center; justify-content: center;
+      font-size: .88rem; flex-shrink: 0;
+    }
+    .typing-dots {
+      background: #fef2f2; border: 1px solid #fecaca;
+      padding: 14px 18px; border-radius: 14px; border-top-left-radius: 4px;
+      display: flex; gap: 5px; align-items: center;
+    }
+    .typing-dots span {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: #dc2626; opacity: .5;
+      animation: dot 1.2s infinite;
+    }
+    .typing-dots span:nth-child(2){animation-delay:.2s}
+    .typing-dots span:nth-child(3){animation-delay:.4s}
+    @keyframes dot{0%,80%,100%{transform:scale(1);opacity:.35}40%{transform:scale(1.35);opacity:1}}
+
+    /* Input area */
+    .chat-input-wrap {
+      padding: 16px 20px; border-top: 1px solid var(--border);
+      background: var(--off); display: flex; gap: 10px;
+    }
+    .chat-input-wrap textarea {
+      flex: 1; background: var(--white);
+      border: 1.5px solid var(--border); border-radius: 10px;
+      padding: 11px 14px; font-size: .88rem; font-family: inherit;
+      color: var(--text); resize: none; outline: none;
+      transition: border-color .2s; min-height: 54px; max-height: 120px; line-height: 1.5;
+    }
+    .chat-input-wrap textarea:focus { border-color: var(--navy-l); }
+    .chat-input-wrap textarea:disabled { opacity: .45; cursor: not-allowed; }
+    .chat-input-wrap textarea::placeholder { color: #94a3b8; }
+    .btn-send {
+      background: var(--navy); color: var(--white);
+      border: none; border-radius: 10px;
+      padding: 0 22px; font-size: .88rem; font-weight: 800;
+      cursor: pointer; align-self: flex-end; height: 54px;
+      display: flex; align-items: center; gap: 6px;
+      transition: background .2s, transform .15s; white-space: nowrap;
+    }
+    .btn-send:hover:not(:disabled) { background: var(--navy-l); transform: translateY(-1px); }
+    .btn-send:disabled { opacity: .35; cursor: not-allowed; transform: none; }
+
+    /* ══════════════════════════════════════════════════
+       FEEDBACK PANEL
+    ══════════════════════════════════════════════════ */
+    .feedback-col {
+      display: flex; flex-direction: column; gap: 14px;
+    }
+
+    .fb-card {
+      background: var(--white); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 20px 22px;
+      box-shadow: var(--sh);
+    }
+    .fb-card-title {
+      font-size: .7rem; font-weight: 800; letter-spacing: 2px;
+      text-transform: uppercase; color: var(--muted);
+      margin-bottom: 16px; display: flex; align-items: center; gap: 7px;
+    }
+    .fb-card-title .title-icon { font-size: .9rem; }
+
+    /* Score */
+    .score-row {
+      display: flex; align-items: center; gap: 16px;
+    }
+    .score-ring {
+      width: 70px; height: 70px; border-radius: 50%;
+      border: 3px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.55rem; font-weight: 900; flex-shrink: 0;
+      transition: all .4s;
+    }
+    .score-ring.low  { border-color: var(--red);   color: var(--red);   background: #fef2f2; }
+    .score-ring.mid  { border-color: var(--amber);  color: var(--amber);  background: #fffbeb; }
+    .score-ring.high { border-color: var(--green);  color: var(--green);  background: #f0fdf4; }
+    .score-meta strong { display: block; font-size: .9rem; color: var(--text); margin-bottom: 4px; }
+    .score-meta span  { font-size: .8rem; color: var(--muted); line-height: 1.55; }
+
+    /* Coaching lists */
+    .fb-section { margin-bottom: 16px; }
+    .fb-section:last-child { margin-bottom: 0; }
+    .fb-section-lbl {
+      font-size: .68rem; font-weight: 800; letter-spacing: 1.5px;
+      text-transform: uppercase; margin-bottom: 8px;
+    }
+    .fb-section-lbl.green { color: var(--green); }
+    .fb-section-lbl.amber { color: var(--amber); }
+    .fb-ul { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+    .fb-ul li {
+      font-size: .82rem; color: var(--text); line-height: 1.6;
+      padding-left: 20px; position: relative;
+    }
+    .fb-ul.good li::before { content: '✓'; position:absolute; left:0; color:var(--green); font-weight:900; }
+    .fb-ul.impr li::before { content: '↑'; position:absolute; left:0; color:var(--amber); font-weight:900; }
+
+    /* Expert rewrite */
+    .rewrite-box {
+      background: var(--off);
+      border-left: 3px solid var(--gold);
+      border-radius: 0 8px 8px 0;
+      padding: 13px 16px;
+      font-size: .83rem; color: var(--text);
+      line-height: 1.72; font-style: italic;
+    }
+
+    /* Empty state in feedback cards */
+    .fb-empty {
+      display: flex; flex-direction: column; align-items: center;
+      justify-content: center; gap: 8px; padding: 24px 12px; text-align: center;
+    }
+    .fb-empty .fe-icon { font-size: 1.8rem; opacity: .3; }
+    .fb-empty p { font-size: .78rem; color: var(--muted); line-height: 1.6; }
+
+    /* Loading */
+    .fb-loading {
+      display: flex; align-items: center; gap: 10px;
+      padding: 12px 0; font-size: .82rem; color: var(--muted);
+    }
+    .spinner {
+      width: 16px; height: 16px; border-radius: 50%;
+      border: 2px solid var(--border); border-top-color: var(--gold);
+      animation: spin .7s linear infinite; flex-shrink: 0;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Error */
+    .err-msg {
+      background: #fef2f2; border: 1px solid #fecaca;
+      border-radius: 10px; padding: 11px 16px;
+      font-size: .82rem; color: var(--red); line-height: 1.6;
+    }
+
+    /* ══════════════════════════════════════════════════
+       FOOTER
+    ══════════════════════════════════════════════════ */
+    footer {
+      background: #060f1f; padding: 22px 28px;
+      text-align: center; font-size: .78rem; color: rgba(255,255,255,.25);
+    }
+    footer em { color: var(--gold); font-style: normal; }
+    footer a  { color: rgba(255,255,255,.4); transition: color .2s; }
+    footer a:hover { color: var(--gold); }
+
+    /* ══════════════════════════════════════════════════
+       RESPONSIVE
+    ══════════════════════════════════════════════════ */
+    @media (max-width: 960px) {
+      .sim-grid { grid-template-columns: 1fr; }
+      .stats-row .stat-pill:nth-child(3) { display: none; }
+    }
+    @media (max-width: 640px) {
+      .nav-links a:not(.nav-cta) { display: none; }
+      .stats-row { display: none; }
+      .page-hero { padding: 36px 20px; }
+      .api-box { min-width: unset; width: 100%; }
+      .page-hero-inner { flex-direction: column; align-items: flex-start; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ══ NAV ══════════════════════════════════════════════ -->
+<nav>
+  <div class="nav-inner">
+    <a href="index.html" class="nav-logo">AFC<em>.</em></a>
+    <div class="nav-links">
+      <a href="index.html#about">About</a>
+      <a href="index.html#experience">Experience</a>
+      <a href="index.html#skills">Skills</a>
+      <a href="simulator.html" class="active">🎭 CS Simulator</a>
+      <a href="index.html#contact" class="nav-cta">Contact</a>
+    </div>
+  </div>
+</nav>
+
+<!-- ══ API KEY BAR ═══════════════════════════════════════ -->
+<div class="api-bar">
+  <span class="api-bar-label">🔑 Anthropic API Key</span>
+  <input
+    type="text"
+    id="api-key"
+    value=""
+    placeholder="sk-ant-api03-..."
+    autocomplete="off"
+    spellcheck="false"
+  >
+  <span class="api-bar-status" id="key-status">Key loaded</span>
+  <span class="api-bar-hint">🔒 Runs locally in your browser — never sent anywhere else</span>
+</div>
+
+<!-- ══ PAGE HERO ════════════════════════════════════════ -->
+<div class="page-hero">
+  <div class="page-hero-inner">
+    <div>
+      <div class="ph-eyebrow"><span>Training Tool</span></div>
+      <h1>Difficult Client Simulator</h1>
+      <p>Practice handling tough customer conversations. The AI plays a frustrated client — you respond as a CS professional. Get instant coaching feedback on every reply.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MAIN ═════════════════════════════════════════════ -->
+<main>
+
+  <!-- Scenario row -->
+  <div class="scenario-row">
+    <span class="scenario-row-label">Scenario</span>
+    <button class="sc-btn" data-sc="delivery"     onclick="selectScenario('delivery')">
+      <span class="sc-icon">🚚</span> Late Delivery
+    </button>
+    <button class="sc-btn" data-sc="charge"       onclick="selectScenario('charge')">
+      <span class="sc-icon">💳</span> Wrong Charge
+    </button>
+    <button class="sc-btn" data-sc="feature"      onclick="selectScenario('feature')">
+      <span class="sc-icon">🔧</span> Broken Feature
+    </button>
+    <button class="sc-btn" data-sc="cancellation" onclick="selectScenario('cancellation')">
+      <span class="sc-icon">❌</span> Cancellation Issue
+    </button>
+    <button class="btn-reset" onclick="resetSim()">↺ Reset</button>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-row">
+    <div class="stat-pill">
+      <div class="sp-icon">💬</div>
+      <div><div class="sp-num" id="stat-ex">0</div><div class="sp-lbl">Exchanges</div></div>
+    </div>
+    <div class="stat-pill">
+      <div class="sp-icon">📊</div>
+      <div><div class="sp-num" id="stat-avg">—</div><div class="sp-lbl">Avg Score</div></div>
+    </div>
+    <div class="stat-pill">
+      <div class="sp-icon">🏆</div>
+      <div><div class="sp-num" id="stat-best">—</div><div class="sp-lbl">Best Score</div></div>
+    </div>
+  </div>
+
+  <!-- Sim grid -->
+  <div class="sim-grid">
+
+    <!-- Chat -->
+    <div class="chat-panel">
+      <div class="chat-header">
+        <div class="ch-avatar">😤</div>
+        <div class="ch-info">
+          <strong id="client-name">Choose a scenario to begin</strong>
+          <span id="client-ctx">Select one of the 4 buttons above</span>
+        </div>
+        <div class="mood-badge" id="mood-badge">Frustrated</div>
+      </div>
+
+      <div class="chat-messages" id="chat-msgs">
+        <div class="empty-state">
+          <div class="es-icon">🎭</div>
+          <h3>Pick a scenario</h3>
+          <p>The AI will play a difficult customer and react to how you handle the situation. You'll get scored and coached after every reply.</p>
+        </div>
+      </div>
+
+      <div class="chat-input-wrap">
+        <textarea
+          id="user-input"
+          placeholder="Type your response as a CS professional…"
+          rows="2"
+          disabled
+          onkeydown="handleKey(event)"
+        ></textarea>
+        <button class="btn-send" id="btn-send" disabled onclick="sendMessage()">
+          Send ↑
+        </button>
+      </div>
+    </div>
+
+    <!-- Feedback -->
+    <div class="feedback-col">
+
+      <div class="fb-card" id="card-score">
+        <div class="fb-card-title"><span class="title-icon">📊</span> Response Score</div>
+        <div class="fb-empty">
+          <div class="fe-icon">🎯</div>
+          <p>Your tone score (1–10) will appear here after your first reply.</p>
+        </div>
+      </div>
+
+      <div class="fb-card" id="card-coaching">
+        <div class="fb-card-title"><span class="title-icon">💡</span> Coaching Feedback</div>
+        <div class="fb-empty">
+          <div class="fe-icon">📝</div>
+          <p>What worked, what to improve — specific and actionable.</p>
+        </div>
+      </div>
+
+      <div class="fb-card" id="card-rewrite">
+        <div class="fb-card-title"><span class="title-icon">✨</span> Expert Rewrite</div>
+        <div class="fb-empty">
+          <div class="fe-icon">💬</div>
+          <p>See how an expert CS professional would phrase the same response.</p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</main>
+
+<!-- ══ FOOTER ════════════════════════════════════════════ -->
+<footer>
+  <p>
+    <em>Ana Fernanda Coindreau Garcia</em> · CS Simulator ·
+    <a href="index.html">← Back to Portfolio</a>
+  </p>
+</footer>
+
+<script>
+// ═══════════════════════════════════════════════════════
+//  DATA
+// ═══════════════════════════════════════════════════════
+const SCENARIOS = {
+  delivery: {
+    name: 'Alex M.',
+    label: 'Late Delivery',
+    ctx: 'Order 3 weeks overdue · Event tomorrow',
+    desc: 'A customer whose order is 3 weeks late. They have a critical corporate event tomorrow and needed the product for it. They sent two support emails with no reply and are threatening a bank dispute.',
+    opening: "This is absolutely unacceptable! I placed my order THREE WEEKS ago and it still hasn't arrived. I have a corporate event TOMORROW and I needed this. I've sent two emails and no one has responded. I want answers RIGHT NOW or I'm disputing the charge with my bank!"
+  },
+  charge: {
+    name: 'Morgan K.',
+    label: 'Wrong Charge',
+    ctx: 'Double charged · Unresolved for 2 weeks',
+    desc: 'A customer double-charged $299. They have contacted support for two weeks and keep getting different answers. They are frustrated and accusing the company of fraud.',
+    opening: "I just checked my bank statement and you charged me TWICE this month — $299 taken out TWO times. I've been trying to get this resolved for two weeks and every time I contact support I get a different story. I want my money back TODAY. This is basically fraud!"
+  },
+  feature: {
+    name: 'Jordan L.',
+    label: 'Broken Feature',
+    ctx: 'Critical feature down · Presentation in 2hrs',
+    desc: 'A customer whose critical report-export feature broke after a software update. Their whole team is blocked and they have a client presentation in 2 hours.',
+    opening: "Your latest update completely BROKE my export reports feature! I cannot get any data out and I have a CLIENT PRESENTATION in 2 HOURS. My entire team is stuck and we're losing credibility. How do you push an update without testing it?! I need this fixed NOW."
+  },
+  cancellation: {
+    name: 'Riley T.',
+    label: 'Cancellation Issue',
+    ctx: 'Cancelled 6 weeks ago · Charged 2 more times',
+    desc: 'A customer who cancelled their subscription 6 weeks ago with a confirmation email, but has since been charged twice more. They want a full refund and proof of cancellation.',
+    opening: "I cancelled my subscription SIX WEEKS AGO and you have charged me TWO MORE TIMES since then. I have the cancellation confirmation email with a reference number right here. This is theft. I want a full refund for both charges AND written confirmation that my account is actually cancelled."
+  }
+};
+
+// ═══════════════════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════════════════
+let S = {
+  scenario: null,
+  history: [],       // customer conversation
+  exchanges: 0,
+  scores: [],
+  busy: false,
+  mood: 0            // 0=furious … 6=resolved
+};
+
+// ═══════════════════════════════════════════════════════
+//  PROMPTS
+// ═══════════════════════════════════════════════════════
+function customerSystem(sc) {
+  return `You are roleplaying as a frustrated customer in a Customer Success training simulation. Stay fully in character at all times.
+
+SCENARIO: ${sc.desc}
+CUSTOMER NAME: ${sc.name}
+
+BEHAVIORAL RULES:
+- Genuine empathy + clear ownership + specific next steps from the rep → de-escalate slightly (not instantly)
+- Generic apologies, jargon, blame-shifting, or vague timelines → stay angry or escalate
+- Asking too many unnecessary questions when action is needed → express impatience
+- Keep responses 2–4 sentences. Be human, not a villain.
+- Ask sharp follow-up questions a real customer would ask.
+- NEVER break character. NEVER give coaching feedback. NEVER say you are an AI.`;
+}
+
+function feedbackPrompt(sc, clientMsg, userReply) {
+  return `You are an expert Customer Success coach reviewing a trainee's response.
+
+SCENARIO: ${sc.desc}
+CUSTOMER MESSAGE: "${clientMsg}"
+TRAINEE RESPONSE: "${userReply}"
+
+Return ONLY valid JSON — no markdown, no text outside the JSON:
+{
+  "worked": ["strength 1", "strength 2 if applicable"],
+  "improve": ["improvement 1", "improvement 2 if applicable"],
+  "score": 7,
+  "score_reason": "One sentence explaining the score.",
+  "rewrite": "A model response (2–3 sentences) an expert CS professional would send."
+}
+
+SCORE GUIDE: 1–3=poor(defensive/dismissive/no empathy), 4–5=below avg(some empathy, no clear action), 6–7=good(empathy+action, room to improve), 8–9=excellent(full empathy+ownership+specific timeline), 10=outstanding(all above+proactive trust-building)`;
+}
+
+// ═══════════════════════════════════════════════════════
+//  API
+// ═══════════════════════════════════════════════════════
+async function claude(system, messages, maxTokens = 400) {
+  const keyInput = document.getElementById('api-key');
+  const key = keyInput ? keyInput.value.trim() : '';
+  if (!key) throw new Error('No API key found. Please enter your Anthropic API key in the bar at the top of the page.');
+
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': key,
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true'
+    },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-5-20251001',
+      max_tokens: maxTokens,
+      system,
+      messages
+    })
+  });
+
+  if (!res.ok) {
+    const e = await res.json().catch(() => ({}));
+    throw new Error(e?.error?.message || `API error ${res.status}`);
+  }
+  return (await res.json()).content[0].text;
+}
+
+// ═══════════════════════════════════════════════════════
+//  SCENARIO
+// ═══════════════════════════════════════════════════════
+function selectScenario(key) {
+  if (S.busy) return;
+  S = { scenario: SCENARIOS[key], history: [], exchanges: 0, scores: [], busy: false, mood: 0 };
+
+  document.querySelectorAll('.sc-btn').forEach(b =>
+    b.classList.toggle('active', b.dataset.sc === key));
+
+  document.getElementById('client-name').textContent = S.scenario.name;
+  document.getElementById('client-ctx').textContent  = S.scenario.ctx;
+
+  const msgs = document.getElementById('chat-msgs');
+  msgs.innerHTML = '';
+  S.history.push({ role: 'assistant', content: S.scenario.opening });
+  addMsg('client', S.scenario.name, S.scenario.opening);
+
+  resetFeedback();
+  updateStats();
+  updateMood();
+
+  const inp = document.getElementById('user-input');
+  inp.disabled = false;
+  inp.placeholder = `Respond to ${S.scenario.name} as a CS professional…`;
+  document.getElementById('btn-send').disabled = false;
+  inp.focus();
+}
+
+// ═══════════════════════════════════════════════════════
+//  MESSAGING
+// ═══════════════════════════════════════════════════════
+function handleKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+}
+
+async function sendMessage() {
+  if (!S.scenario || S.busy) return;
+  const inp = document.getElementById('user-input');
+  const txt = inp.value.trim();
+  if (!txt) return;
+
+  if (!document.getElementById('api-key').value.trim()) {
+    addError('Please enter your Anthropic API key at the top of the page.');
+    return;
+  }
+
+  const lastClientMsg = [...S.history].reverse().find(m => m.role === 'assistant')?.content || '';
+
+  addMsg('user', 'You', txt);
+  S.history.push({ role: 'user', content: txt });
+  inp.value = ''; inp.disabled = true;
+  document.getElementById('btn-send').disabled = true;
+  S.busy = true;
+
+  showTyping();
+  loadFeedback();
+
+  try {
+    const [clientReply, rawFeedback] = await Promise.all([
+      claude(customerSystem(S.scenario), S.history, 400),
+      claude(feedbackPrompt(S.scenario, lastClientMsg, txt),
+        [{ role: 'user', content: 'Evaluate and return JSON.' }], 600)
+    ]);
+
+    hideTyping();
+    S.history.push({ role: 'assistant', content: clientReply });
+    addMsg('client', S.scenario.name, clientReply);
+
+    let fb;
+    try {
+      const m = rawFeedback.match(/\{[\s\S]*\}/);
+      fb = JSON.parse(m ? m[0] : rawFeedback);
+    } catch {
+      fb = { worked: ['Response sent.'], improve: ['Could not parse feedback.'],
+             score: 5, score_reason: 'Parsing error.', rewrite: '' };
+    }
+
+    S.exchanges++;
+    S.scores.push(fb.score);
+    if      (fb.score >= 8) S.mood = Math.min(S.mood + 2, 6);
+    else if (fb.score >= 6) S.mood = Math.min(S.mood + 1, 6);
+    else if (fb.score <= 3) S.mood = Math.max(S.mood - 1, 0);
+
+    updateMood();
+    renderFeedback(fb);
+    updateStats();
+
+  } catch(err) {
+    hideTyping();
+    addError(err.message);
+    resetFeedback();
+  }
+
+  S.busy = false;
+  inp.disabled = false;
+  document.getElementById('btn-send').disabled = false;
+  inp.focus();
+}
+
+// ═══════════════════════════════════════════════════════
+//  RENDER HELPERS
+// ═══════════════════════════════════════════════════════
+function addMsg(type, name, text) {
+  const wrap = document.getElementById('chat-msgs');
+  const d = document.createElement('div');
+  d.className = `msg ${type}`;
+  const em = type === 'client' ? '😤' : '👤';
+  d.innerHTML = `
+    <div class="msg-av">${em}</div>
+    <div class="msg-body">
+      <div class="msg-name">${esc(name)}</div>
+      <div class="msg-bubble">${esc(text)}</div>
+    </div>`;
+  wrap.appendChild(d);
+  wrap.scrollTop = wrap.scrollHeight;
+}
+
+function addError(msg) {
+  const wrap = document.getElementById('chat-msgs');
+  const d = document.createElement('div');
+  d.className = 'err-msg';
+  d.textContent = '⚠️ ' + msg;
+  wrap.appendChild(d);
+  wrap.scrollTop = wrap.scrollHeight;
+}
+
+function showTyping() {
+  const wrap = document.getElementById('chat-msgs');
+  const d = document.createElement('div');
+  d.id = 'typing'; d.className = 'typing';
+  d.innerHTML = `<div class="typing-av">😤</div>
+    <div class="typing-dots"><span></span><span></span><span></span></div>`;
+  wrap.appendChild(d);
+  wrap.scrollTop = wrap.scrollHeight;
+}
+
+function hideTyping() { document.getElementById('typing')?.remove(); }
+
+function loadFeedback() {
+  ['card-score','card-coaching','card-rewrite'].forEach(id => {
+    const card = document.getElementById(id);
+    const title = card.querySelector('.fb-card-title').outerHTML;
+    card.innerHTML = title + `<div class="fb-loading"><div class="spinner"></div> Analyzing your response…</div>`;
+  });
+}
+
+function renderFeedback(fb) {
+  const sc = fb.score;
+  const cls = sc <= 4 ? 'low' : sc <= 6 ? 'mid' : 'high';
+  const lbl = sc <= 3 ? 'Needs Work' : sc <= 5 ? 'Below Average' : sc <= 7 ? 'Good' : sc <= 8 ? 'Very Good' : sc <= 9 ? 'Excellent' : 'Outstanding';
+
+  // Score
+  document.getElementById('card-score').innerHTML = `
+    <div class="fb-card-title"><span class="title-icon">📊</span> Response Score</div>
+    <div class="score-row">
+      <div class="score-ring ${cls}">${sc}<span style="font-size:.75rem">/10</span></div>
+      <div class="score-meta">
+        <strong>${lbl}</strong>
+        <span>${esc(fb.score_reason)}</span>
+      </div>
+    </div>`;
+
+  // Coaching
+  const workedHtml = (fb.worked||[]).map(w=>`<li>${esc(w)}</li>`).join('');
+  const improveHtml = (fb.improve||[]).map(i=>`<li>${esc(i)}</li>`).join('');
+  document.getElementById('card-coaching').innerHTML = `
+    <div class="fb-card-title"><span class="title-icon">💡</span> Coaching Feedback</div>
+    ${workedHtml ? `<div class="fb-section">
+      <div class="fb-section-lbl green">✓ What Worked</div>
+      <ul class="fb-ul good">${workedHtml}</ul>
+    </div>` : ''}
+    ${improveHtml ? `<div class="fb-section">
+      <div class="fb-section-lbl amber">↑ What to Improve</div>
+      <ul class="fb-ul impr">${improveHtml}</ul>
+    </div>` : ''}`;
+
+  // Rewrite
+  document.getElementById('card-rewrite').innerHTML = `
+    <div class="fb-card-title"><span class="title-icon">✨</span> Expert Rewrite</div>
+    <div class="rewrite-box">${esc(fb.rewrite || '—')}</div>`;
+}
+
+function resetFeedback() {
+  const empties = [
+    ['card-score',    '📊', 'Response Score',    'fe-icon', '🎯', 'Your tone score (1–10) will appear after your first reply.'],
+    ['card-coaching', '💡', 'Coaching Feedback', 'fe-icon', '📝', 'What worked and what to improve — specific and actionable.'],
+    ['card-rewrite',  '✨', 'Expert Rewrite',    'fe-icon', '💬', 'See how an expert CS professional would phrase the same response.'],
+  ];
+  empties.forEach(([id, icon, title, , fe, text]) => {
+    document.getElementById(id).innerHTML = `
+      <div class="fb-card-title"><span class="title-icon">${icon}</span> ${title}</div>
+      <div class="fb-empty"><div class="fe-icon">${fe}</div><p>${text}</p></div>`;
+  });
+}
+
+function updateStats() {
+  document.getElementById('stat-ex').textContent = S.exchanges;
+  if (S.scores.length) {
+    document.getElementById('stat-avg').textContent  = (S.scores.reduce((a,b)=>a+b,0)/S.scores.length).toFixed(1);
+    document.getElementById('stat-best').textContent = Math.max(...S.scores);
+  } else {
+    document.getElementById('stat-avg').textContent  = '—';
+    document.getElementById('stat-best').textContent = '—';
+  }
+}
+
+function updateMood() {
+  const moods = [
+    ['Furious',      ''],
+    ['Very Angry',   ''],
+    ['Frustrated',   ''],
+    ['Irritated',    ''],
+    ['Calming Down', 'calming'],
+    ['Satisfied',    'calming'],
+    ['Resolved ✓',   'calming'],
+  ];
+  const [label, cls] = moods[Math.min(S.mood, 6)];
+  const badge = document.getElementById('mood-badge');
+  badge.textContent  = label;
+  badge.className    = 'mood-badge' + (cls ? ' '+cls : '');
+}
+
+function resetSim() {
+  S = { scenario: null, history: [], exchanges: 0, scores: [], busy: false, mood: 0 };
+  document.querySelectorAll('.sc-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('client-name').textContent = 'Choose a scenario to begin';
+  document.getElementById('client-ctx').textContent  = 'Select one of the 4 buttons above';
+  document.getElementById('mood-badge').textContent  = 'Frustrated';
+  document.getElementById('mood-badge').className    = 'mood-badge';
+  document.getElementById('chat-msgs').innerHTML = `
+    <div class="empty-state">
+      <div class="es-icon">🎭</div>
+      <h3>Pick a scenario</h3>
+      <p>The AI will play a difficult customer and react to how you handle the situation. You'll get scored and coached after every reply.</p>
+    </div>`;
+  const inp = document.getElementById('user-input');
+  inp.disabled = true; inp.value = '';
+  inp.placeholder = 'Type your response as a CS professional…';
+  document.getElementById('btn-send').disabled = true;
+  resetFeedback();
+  updateStats();
+}
+
+// Update key status indicator
+function updateKeyStatus() {
+  const st  = document.getElementById('key-status');
+  const val = document.getElementById('api-key').value.trim();
+  if (val.startsWith('sk-ant-')) {
+    st.textContent = 'Key ready ✓';
+    st.style.color = 'var(--green)';
+  } else if (val.length > 0) {
+    st.textContent = 'Invalid format';
+    st.style.color = 'var(--red)';
+  } else {
+    st.textContent = 'No key entered';
+    st.style.color = 'var(--amber)';
+  }
+}
+document.getElementById('api-key').addEventListener('input', updateKeyStatus);
+// Run once on load so pre-filled value is reflected immediately
+document.addEventListener('DOMContentLoaded', updateKeyStatus);
+
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+</script>
+</body>
+</html>
